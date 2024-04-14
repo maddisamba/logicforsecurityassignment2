@@ -1,68 +1,82 @@
+import java.util.*;
+
 class Auction{
-    liveauction(){
-        int priceRaise=50;
+    int priceRaise=50;
+    public void liveauction(){
+
         boolean sold=false;
         int bidStartingprice=getPriceFromOfflineBidders();
+        System.out.print("start:");
         while(!sold){
             bidStartingprice=bidStartingprice+priceRaise;
-           String offlineuser=matchofflinebidders(bidStartingprice);//for 750 we dont get any users
-           System.out.println("auction house bids for B"+user+": 550 kr "+bidStartingprice);
-            //System.out.println("auction house bids for B"+user+": 650 kr"+bidStartingprice+priceRaise);
-            //System.out.println("auction house bids for B"+user+": 700 kr"+bidStartingprice+priceRaise);
-
-           String onlineuser=onlinebidders();
-            System.out.println("C bids 600 kr");
-            //System.out.println("C bids 700 kr");
-            //System.out.println("C bids 750 kr");
-            if(offlineuser==null ){
+           String offlineuser=matchofflinebidders(bidStartingprice);
+            String[] biddata = offlineuser.split(":", 2);
+            if(biddata[0].equalsIgnoreCase("No user found for this price") ){
                 sold=true;
-                System.out.println("going once, going twice, sold to C for 750 kr");
+                System.out.println("going once, going twice, sold ");
+                break;
             }
+            else{
+                System.out.println("auction house bids for "+biddata[0]+": "+biddata[1]+" kr");
+                bidStartingprice= Integer.parseInt(biddata[1])+priceRaise;
+            }
+
+            String onlineuser=onlinebidders(bidStartingprice);
+
             if(onlineuser==null){
                 sold=true;
-                //System.out.println("going once, going twice, sold to B for 750 kr");
+                System.out.println("going once, going twice, sold ");
+                break;
+            }
+            else{
+                System.out.println(onlineuser);
             }
         }
 
     }
 
-    onlinebidders(){
-        return "C bids for 600 kr";
+    public String onlinebidders(int bidStartingprice){
+        return "C bids for "+bidStartingprice+" kr";
     }
 
-    matchofflinebidders(int bidPrice){
-        HashMap<String,Integer> User=getAnonymizedusers(bidPrice);
-        return User.name();
+    public String matchofflinebidders(int bidPrice){
+        return getAnonymizedusers(bidPrice).toString();
     }
 
-    getPriceFromOfflineBidders(){
+    public int getPriceFromOfflineBidders(){
+        return (int)getAnonymizedusers(0);
+    }
+
+    public Object getAnonymizedusers(int price){
         HashMap<String,Integer> offlineBidders=new HashMap<>();
-        offlineBidders=getAnonymizedusers(0);
-
-        int min=Integer.MAX_VALUE;
-        int secondmin=Integer.MAX_VALUE;
-        for (int price:offlineBidders.values()){
-            if(price<min){
-                secondmin=min;
-                min=price;
-            }
-            else if(price<secondmin && price!=min){
-                secondmin=price;
-            }
+        offlineBidders.put("userA",500);
+        offlineBidders.put("userB",700);
+        if(price==0){
+            List<Integer> prices=new ArrayList<>();
+            prices.addAll(offlineBidders.values());
+            Collections.sort(prices);
+            return prices.get(prices.size()-2);
         }
-        return secondmin;
+        else{
+
+
+            for (String user:offlineBidders.keySet()){
+                if(offlineBidders.get(user)>=price){
+                    return  user+":"+price;
+                }
+            }
+            for (String user:offlineBidders.keySet()){
+                if(offlineBidders.get(user)>=(price-priceRaise)){
+                    return user+":"+(price-priceRaise);
+                }
+            }
+            return "No user found for this price:"+price;
+            //return offlineBidders.entrySet().stream().filter(entry->entry.getValue()>=price).map(Map.Entry::getKey).findFirst().get();
+        }
     }
 
-    getAnonymizedusers(int price){
-        HashMap<String,Integer> offlineBidders=new HashMap<>();
-        offlineBidders.put("user1",500);
-        offlineBidders.put("user2",700);
-        HashMap<String,Integer> Users=new HashMap<>();
-        for (String user:offlineBidders.keySet()){
-            if(offlineBidders.get(user)>price){
-                Users.put(user,offlineBidders.get(user));
-            }
-        }
-        return Users;
+    public  static void main(String[] args){
+        Auction auction=new Auction();
+        auction.liveauction();
     }
 }
